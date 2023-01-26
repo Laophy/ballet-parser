@@ -14,11 +14,13 @@
             <h1>Upload Multiple CSV files:</h1>
             <input type="file" id="uploadFile" accept=".csv" multiple />
             <button id="uploadConfirm">Upload File(s)</button>
+            <button id="clearUploads">Clear Files</button>
         </div>
 
 
         <div id="container" style="width: 50%; height: auto; margin: 20px;">
-            <pre id="data"></pre>
+            <pre id="data" style="padding: 10px; overflow-x: auto; padding: 10px;"><b>Unique Canidates:</b></pre>
+            <pre id="deletedData" style="width: 100%; overflow-x: auto; padding: 10px;">Duplicate Entries found: </pre>
         </div>
     </div>
 
@@ -28,10 +30,14 @@
         let balletData = [];
         // All unique names calculated after parsing and saving
         let uniqueNames = [];
+        // All unique voter ids
+        let uniqueIDS = [];
+        // Removed ids
+        let duplicateIDS = [];
 
         // Grab the input data (allows for multiple CSV files)
         const uploadConfirm = document.getElementById('uploadConfirm').addEventListener('click', () => {
-            if (document.getElementById('uploadFile').files.lenght >= 20) {
+            if (document.getElementById('uploadFile').files.length >= 20) {
                 alert('Uploading more than 20 files will heavily increase your CPU usage and is disabled!');
                 console.log('Too many files! Upload less than 20 CSV files at a time!')
                 return;
@@ -48,6 +54,13 @@
                         }
                     })
             };
+
+            // Reset file stream when reuploading
+            //document.getElementById('uploadFile').value = '';
+        });
+        const clearUploads = document.getElementById('clearUploads').addEventListener('click', () => {
+            // Reset file stream when reuploading
+            document.getElementById('uploadFile').value = '';
         });
 
         // NOTES
@@ -62,8 +75,32 @@
                 balletData.push(data)
             }
 
+            // Removes duplcated ids from our clean data
+            removeDuplicated(balletData)
+
             // get unique canidates after sorting
-            console.log(getUnique(balletData))
+            getUnique(balletData)
+        }
+
+        const removeDuplicated = (ballets) => {
+            for(let round of ballets){
+                Object.entries(round).forEach((entry) => {
+                    const [key, val] = entry;
+                    value = parseInt(val)
+                    if(key.includes('VoterID') && !uniqueIDS.includes(value)){
+                        uniqueIDS.push(value)
+                    }else if(key.includes('VoterID')){
+                        // remove duplicated voter id
+                        ballets.splice(ballets.indexOf(round), 1);
+                        //console.log('Deleted duplate voterID ' + value)
+                        if(!duplicateIDS.includes(value)){
+                            duplicateIDS.push(value);
+                        }
+                    }
+                });
+            }
+            duplicateIDS.sort(function(a, b) {return a - b;})
+            document.getElementById('deletedData').innerHTML = 'Duplicate Entries found: ' + duplicateIDS;
         }
 
         // returns unique names found in the ballet object
