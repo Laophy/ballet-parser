@@ -18,13 +18,17 @@
 
 
         <div id="container" style="width: 50%; height: auto; margin: 20px;">
-            <p>Imported Data:</p>
             <pre id="data"></pre>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
     <script>
+        // All ballet data saved in an array of json
+        let balletData = [];
+        // All unique names calculated after parsing and saving
+        let uniqueNames = [];
+
         // Grab the input data (allows for multiple CSV files)
         const uploadConfirm = document.getElementById('uploadConfirm').addEventListener('click', () => {
             if (document.getElementById('uploadFile').files.lenght >= 20) {
@@ -40,26 +44,44 @@
                         header: true,
                         skipEmptyLines: true,
                         complete: function (res) {
-                            loadData(res);
+                            saveBallets(res);
                         }
                     })
             };
         });
 
+        // NOTES
 
-        const loadData = (file) => {
+        //p.innerHTML += JSON.stringify(data, null, 2);
+        //{First Choice: 'Dalinar Kholin', Second Choice: 'Jasnah Kholin', Third Choice: 'Kaladin Stormblessed', VoterID: '1002'}
+
+        const saveBallets = (file) => {
             let p = document.getElementById('data');
             for (let data of file.data) {
-                //p.innerHTML += JSON.stringify(data, null, 2);
-
-
-                //{First Choice: 'Dalinar Kholin', Second Choice: 'Jasnah Kholin', Third Choice: 'Kaladin Stormblessed', VoterID: '1002'}
-                console.log(data)
+                // save the parsed data
+                balletData.push(data)
             }
+
+            // get unique canidates after sorting
+            console.log(getUnique(balletData))
         }
 
-        const getUnique = (obj) => {
-            
+        // returns unique names found in the ballet object
+        const getUnique = (ballets) => {
+            for(let round of ballets){
+                Object.entries(round).forEach((entry) => {
+                    const keys = ["First Choice", "Second Choice", "Third Choice"];
+                    const [key, value] = entry;
+                    //console.log(`${key}: ${value}`);
+
+                    // Only push a name if its unique, more than 3 characters, and the key is included in keys list...
+                    if(!uniqueNames.includes(value) && keys.includes(key) && value.length > 3){
+                        uniqueNames.push(value)
+                    }
+                });
+            }
+            document.getElementById('data').innerHTML = `<b>Unique Canidates:</b> <span style="color: red;">${uniqueNames}</span>`;
+            return(uniqueNames)
         }
     </script>
     </body>
