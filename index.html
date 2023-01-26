@@ -18,18 +18,27 @@
         </div>
 
 
-        <div id="container" style="width: 50%; height: auto; margin: 20px;">
+        <div id="container" style="width: 100%; height: auto; margin: 20px;">
             <pre id="data" style="padding: 10px; overflow-x: auto; padding: 10px;"><b>Unique Canidates:</b></pre>
             <pre id="deletedData" style="width: 100%; overflow-x: auto; padding: 10px;">Duplicate Entries found: </pre>
+        </div>
+
+        <div id="results-container" style="width: 100%; height: auto; margin: 20px;">
+            <pre id="results" style="padding: 10px; overflow-x: auto; padding: 10px; margin-top: 100px;"></pre>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
     <script>
+        // Keep track of opened files to reject already inputted files
+        let files = [];
+
         // All ballet data saved in an array of json
         let balletData = [];
+
         // All unique names calculated after parsing and saving
         let uniqueNames = [];
+
         // All unique voter ids
         let uniqueIDS = [];
         // Removed ids
@@ -44,20 +53,26 @@
             }
             // Attempt to load all valid files and parse to json
             for (file of document.getElementById('uploadFile').files) {
-                Papa.parse(file,
-                    {
-                        download: true,
-                        header: true,
-                        skipEmptyLines: true,
-                        complete: function (res) {
-                            saveBallets(res);
-                        }
-                    })
+                if (!files.includes(file.name)) {
+                    Papa.parse(file,
+                        {
+                            download: true,
+                            header: true,
+                            skipEmptyLines: true,
+                            complete: function (res) {
+                                saveBallets(res);
+                            }
+                        })
+                    files.push(file.name)
+                }else{
+                    alert(`File ${file.name} is already uploaded... Skipping file!`)
+                }
             };
 
             // Reset file stream when reuploading
-            //document.getElementById('uploadFile').value = '';
+            document.getElementById('uploadFile').value = '';
         });
+
         const clearUploads = document.getElementById('clearUploads').addEventListener('click', () => {
             // Reset file stream when reuploading
             document.getElementById('uploadFile').value = '';
@@ -77,49 +92,80 @@
 
             // Removes duplcated ids from our clean data
             removeDuplicated(balletData)
+        }
 
-            // get unique canidates after sorting
-            getUnique(balletData)
+        const removeObjectWithVoterID = (arr, id) => {
+            // Making a copy with the Array from() method
+            const arrCopy = Array.from(arr);
+
+            const objWithIdIndex = arrCopy.findIndex((obj) => obj['VoterID'] === id);
+            arrCopy.splice(objWithIdIndex, 1);
+            return arrCopy;
         }
 
         const removeDuplicated = (ballets) => {
-            for(let round of ballets){
+            for (let round of ballets) {
                 Object.entries(round).forEach((entry) => {
-                    const [key, val] = entry;
-                    value = parseInt(val)
-                    if(key.includes('VoterID') && !uniqueIDS.includes(value)){
+                    const [key, value] = entry;
+
+                    if (key.includes('VoterID') && !uniqueIDS.includes(value)) {
                         uniqueIDS.push(value)
-                    }else if(key.includes('VoterID')){
+                    } else if (key.includes('VoterID') && uniqueIDS.includes(value) && !duplicateIDS.includes(value)) {
+
                         // remove duplicated voter id
-                        ballets.splice(ballets.indexOf(round), 1);
+                        //ballets.splice(ballets.indexOf(entry), 1);
+                        ballets = removeObjectWithVoterID(ballets, value);
+
                         //console.log('Deleted duplate voterID ' + value)
-                        if(!duplicateIDS.includes(value)){
+                        if (!duplicateIDS.includes(value)) {
                             duplicateIDS.push(value);
                         }
                     }
                 });
             }
-            duplicateIDS.sort(function(a, b) {return a - b;})
+            duplicateIDS.sort(function (a, b) { return a - b; })
+
+            // get unique canidates after sorting
+            getUnique(balletData)
             document.getElementById('deletedData').innerHTML = 'Duplicate Entries found: ' + duplicateIDS;
+
+            // Find results after sorting uniques 
+            postResults();
         }
 
         // returns unique names found in the ballet object
         const getUnique = (ballets) => {
-            for(let round of ballets){
+            for (let round of ballets) {
                 Object.entries(round).forEach((entry) => {
                     const keys = ["First Choice", "Second Choice", "Third Choice"];
                     const [key, value] = entry;
                     //console.log(`${key}: ${value}`);
 
                     // Only push a name if its unique, more than 3 characters, and the key is included in keys list...
-                    if(!uniqueNames.includes(value) && keys.includes(key) && value.length > 3){
+                    if (!uniqueNames.includes(value) && keys.includes(key) && value.length > 3) {
                         uniqueNames.push(value)
                     }
                 });
             }
             document.getElementById('data').innerHTML = `<b>Unique Canidates:</b> <span style="color: red;">${uniqueNames}</span>`;
-            return(uniqueNames)
+            return uniqueNames
         }
+
+        const postResults = () => {
+            // let files = [];
+            // let balletData = [];
+            // let uniqueNames = [];
+            // let uniqueIDS = [];
+            // let duplicateIDS = [];
+
+            let results = document.getElementById('results');
+            let data = [];
+            balletData.forEach(res => { data.push(JSON.stringify(res, null, 2))});
+            results.innerHTML = `<b>Results: </b>\nFiles: [${files}]\n${data}`
+
+            console.log('done');
+        }
+
     </script>
     </body>
 
