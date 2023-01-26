@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ballet Parser</title>
+</head>
+
+<head>
+    <div id="main" style="height: 100%; width: 100%;">
+        <div id="upload-container" style="background-color: rgba(60, 60, 60, 0.225); padding: 25px;">
+            <h1>Upload Multiple CSV files:</h1>
+            <input type="file" id="uploadFile" accept=".csv" multiple />
+            <button id="uploadConfirm">Upload File(s)</button>
+        </div>
+
+
+        <div id="container" style="width: 50%; height: auto; margin: 20px;">
+            <p>Imported Data:</p>
+            <p id="data"
+                style="font-size: 16px; color: gray; border: 1px solid black; padding: 20px; height: 200px; overflow-y: auto;">
+            </p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
+    <script>
+        // Grab the input data (allows for multiple CSV files)
+        const uploadConfirm = document.getElementById('uploadConfirm').addEventListener('click', () => {
+            if (document.getElementById('uploadFile').files.lenght >= 20) {
+                alert('Uploading more than 20 files will heavily increase your CPU usage and is disabled!');
+                console.log('Too many files! Upload less than 20 CSV files at a time!')
+                return;
+            }
+            // Attempt to load all valid files and parse to json
+            for (file of document.getElementById('uploadFile').files) {
+                Papa.parse(file,
+                    {
+                        download: true,
+                        header: true,
+                        skipEmptyLines: true,
+                        complete: function (res) {
+                            loadData(res);
+                        }
+                    })
+            };
+        });
+
+        const loadData = (file) => {
+            let p = document.getElementById('data');
+            for (let data of file.data) {
+                p.innerHTML += JSON.stringify(data, null, '  ');
+            }
+            console.log(file.data)
+        }
+    </script>
+    </body>
+
+</html>
