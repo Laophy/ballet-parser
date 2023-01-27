@@ -47,6 +47,10 @@
         // Removed canidates throughout the process
         let removedCanidate = [];
 
+        let finished = false;
+
+        let currentRound = 'First Choice'
+
         // Grab the input data (allows for multiple CSV files)
         const uploadConfirm = document.getElementById('uploadConfirm').addEventListener('click', () => {
             if (document.getElementById('uploadFile').files.length >= 20) {
@@ -133,7 +137,7 @@
             document.getElementById('deletedData').innerHTML = 'Duplicate Entries found: ' + duplicateIDS;
 
             // Find results after sorting uniques 
-            postResults();
+            postResults(currentRound);
         }
 
         // returns unique names found in the ballet object
@@ -154,8 +158,7 @@
             return uniqueNames
         }
 
-        const postResults = () => {
-            let round = 'First Choice'
+        const postResults = (round) => {
             // let files = [];
             // let balletData = [];
             // let uniqueNames = [];
@@ -202,16 +205,16 @@
                 })
             }
 
+            checkResults(newData)
+
             let results = document.getElementById('results');
             let data = [];
             newData.forEach(res => { data.push(JSON.stringify(res, null, 2))});
-            results.innerHTML = `<b>Results(${round}): </b>\nFiles: [${files}]\n${data}`
-
-            checkResults(newData)
+            results.innerHTML += `<b>Results(${round}): </b>\nFiles: [${files}]\n${data}\n\n`
         }
 
         const checkResults = (results) => {
-            //console.log(results)
+            console.log(results)
             results.forEach((canidate, index) => {
                 let votes = canidate.votes;
                 let total = 0;
@@ -219,24 +222,43 @@
                     total+= c.votes;
                 })
                 let percentage = votes / total * 100;
-                console.log(canidate.canidate + " : " + percentage + "%")
+                canidate.winPercent = percentage;
+                //console.log(canidate.canidate + " : " + percentage + "%")
 
                 if(percentage >= 50){
                     // Canidate instantly wins the entire election!
                     alert(canidate.canidate + " has won the election by majority vote! This canidate had " + percentage + "% of all total votes!")
+                    finished = true;
                 }
             })
 
-            // Before second round...
-            // remeove anyone with 0 votes
-            // fewest votes canidate losses
-            results.forEach((canidate, index) => {
-                if(canidate.votes === 0){
-                    //remove this canidate
-                    removedCanidate.push(canidate.name)
+            if(finished == false){
+                // Before second round...
+                // remeove anyone with 0 votes
+                // fewest votes canidate losses
+                let smallest = results[0];
+                results.forEach((canidate, index) => {
+                    if(canidate.votes < smallest.votes){
+                        smallest = canidate;
+                        removedCanidate.push(canidate.name)
+                    }
+                    if(canidate.votes === 0){
+                        //remove this canidate
+                        removedCanidate.push(canidate.name)
+                    }
+                })
+                //console.log("Smallest votes this round: " + smallest.canidate + ", " + smallest.votes)
+                //console.log("Removed canidates: " + removedCanidate);
+
+
+                currentRound == 'First Choice' ? currentRound = 'Second Choice' :  currentRound = 'Third Choice';
+                // Try second round
+                if(currentRound === 'Third Choice'){
+                    finished = true;
                 }
-            })
-            console.log("Removed canidates: " + removedCanidate);
+                postResults(currentRound);
+            }
+
         }
 
     </script>
