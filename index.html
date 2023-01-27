@@ -44,6 +44,9 @@
         // Removed ids
         let duplicateIDS = [];
 
+        // Removed canidates throughout the process
+        let removedCanidate = [];
+
         // Grab the input data (allows for multiple CSV files)
         const uploadConfirm = document.getElementById('uploadConfirm').addEventListener('click', () => {
             if (document.getElementById('uploadFile').files.length >= 20) {
@@ -152,16 +155,13 @@
         }
 
         const postResults = () => {
+            let round = 'First Choice'
             // let files = [];
             // let balletData = [];
             // let uniqueNames = [];
             // let uniqueIDS = [];
             // let duplicateIDS = [];
-
-            // let results = document.getElementById('results');
-            // let data = [];
-            // balletData.forEach(res => { data.push(JSON.stringify(res, null, 2))});
-            // results.innerHTML = `<b>Results: </b>\nFiles: [${files}]\n${data}`
+            // let removedCanidate = [];
 
             let canidates = [];
             let votes = [];
@@ -172,15 +172,15 @@
             // })
 
             balletData.forEach((vote, index) => { 
-                if(!canidates.includes(vote['First Choice']) && vote['First Choice'].length > 3){
+                if(!canidates.includes(vote[round]) && vote[round].length > 3){
                     // Canidate was not in the list
                     // add them and add a default vote of 1
-                    canidates.push(vote['First Choice'])
+                    canidates.push(vote[round])
                 }
             });
             canidates.forEach((canidate, inx) => {
                 balletData.forEach((vote, index) => { 
-                    if(vote['First Choice'] === canidate){
+                    if(vote[round] === canidate){
                         if(!votes[inx]){
                             votes[inx] = 1;
                         }else{
@@ -190,18 +190,53 @@
                 });
             })
 
-            console.log(canidates)
-            console.log(votes)
+            // console.log(canidates)
+            // console.log(votes)
 
             let newData = []
             for(let i in canidates){
                 newData.push({
+                    "round": round,
                     "canidate": canidates[i],
                     "votes": votes[i]
                 })
             }
 
-            console.log(newData)
+            let results = document.getElementById('results');
+            let data = [];
+            newData.forEach(res => { data.push(JSON.stringify(res, null, 2))});
+            results.innerHTML = `<b>Results(${round}): </b>\nFiles: [${files}]\n${data}`
+
+            checkResults(newData)
+        }
+
+        const checkResults = (results) => {
+            //console.log(results)
+            results.forEach((canidate, index) => {
+                let votes = canidate.votes;
+                let total = 0;
+                results.forEach((c, i) => {
+                    total+= c.votes;
+                })
+                let percentage = votes / total * 100;
+                console.log(canidate.canidate + " : " + percentage + "%")
+
+                if(percentage >= 50){
+                    // Canidate instantly wins the entire election!
+                    alert(canidate.canidate + " has won the election by majority vote! This canidate had " + percentage + "% of all total votes!")
+                }
+            })
+
+            // Before second round...
+            // remeove anyone with 0 votes
+            // fewest votes canidate losses
+            results.forEach((canidate, index) => {
+                if(canidate.votes === 0){
+                    //remove this canidate
+                    removedCanidate.push(canidate.name)
+                }
+            })
+            console.log("Removed canidates: " + removedCanidate);
         }
 
     </script>
