@@ -13,8 +13,10 @@
         <div id="upload-container" style="background-color: rgba(60, 60, 60, 0.225); padding: 25px;">
             <h1>Upload Multiple CSV files:</h1>
             <input type="file" id="uploadFile" accept=".csv" multiple />
-            <button id="uploadConfirm">Upload File(s)</button>
+            <button id="uploadConfirm">Load Ballets</button>
             <button id="clearUploads">Clear Files</button>
+
+            <button id="start" style="margin-left: 25px; width: 100px; height: 50px;">Start Election</button>
         </div>
 
 
@@ -50,6 +52,9 @@
         let finished = false;
 
         let currentRound = 'First Choice'
+
+        // Store the previous round data to add to next rounds
+        let arrRounds = [];
 
         // Grab the input data (allows for multiple CSV files)
         const uploadConfirm = document.getElementById('uploadConfirm').addEventListener('click', () => {
@@ -90,15 +95,19 @@
         //p.innerHTML += JSON.stringify(data, null, 2);
         //{First Choice: 'Dalinar Kholin', Second Choice: 'Jasnah Kholin', Third Choice: 'Kaladin Stormblessed', VoterID: '1002'}
 
+        const start = document.getElementById('start').addEventListener('click', () => {
+            // Start the process
+
+            // Removes duplcated ids from our clean data
+            removeDuplicated(balletData)
+        });
+
         const saveBallets = (file) => {
             let p = document.getElementById('data');
             for (let data of file.data) {
                 // save the parsed data
                 balletData.push(data)
             }
-
-            // Removes duplcated ids from our clean data
-            removeDuplicated(balletData)
         }
 
         const removeObjectWithVoterID = (arr, id) => {
@@ -198,12 +207,16 @@
 
             let newData = []
             for(let i in canidates){
-                newData.push({
-                    "round": round,
-                    "canidate": canidates[i],
-                    "votes": votes[i]
-                })
+                if(!removedCanidate.includes(canidates[i])){
+                    newData.push({
+                        "round": round,
+                        "canidate": canidates[i],
+                        "votes": votes[i]
+                    })
+                }
             }
+            // push the data into the saved array
+            arrRounds.push(newData);
 
             checkResults(newData)
 
@@ -222,7 +235,7 @@
                     total+= c.votes;
                 })
                 let percentage = votes / total * 100;
-                canidate.winPercent = percentage;
+                canidate.votePercentage = percentage.toFixed(2);
                 //console.log(canidate.canidate + " : " + percentage + "%")
 
                 if(percentage >= 50){
@@ -232,7 +245,7 @@
                 }
             })
 
-            if(finished == false){
+            if(!finished){
                 // Before second round...
                 // remeove anyone with 0 votes
                 // fewest votes canidate losses
@@ -240,15 +253,16 @@
                 results.forEach((canidate, index) => {
                     if(canidate.votes < smallest.votes){
                         smallest = canidate;
-                        removedCanidate.push(canidate.name)
                     }
+
                     if(canidate.votes === 0){
                         //remove this canidate
                         removedCanidate.push(canidate.name)
                     }
                 })
-                //console.log("Smallest votes this round: " + smallest.canidate + ", " + smallest.votes)
-                //console.log("Removed canidates: " + removedCanidate);
+                console.log("Smallest votes this round: " + smallest.canidate + ", " + smallest.votes)
+                removedCanidate.push(smallest.canidate)
+                console.log("Removed canidates: " + removedCanidate);
 
 
                 currentRound == 'First Choice' ? currentRound = 'Second Choice' :  currentRound = 'Third Choice';
@@ -257,6 +271,9 @@
                     finished = true;
                 }
                 postResults(currentRound);
+                
+                // logs final saved data for all rounds
+                //console.log(arrRounds)
             }
 
         }
