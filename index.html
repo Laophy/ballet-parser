@@ -158,12 +158,50 @@
             // let uniqueIDS = [];
             // let duplicateIDS = [];
 
-            let results = document.getElementById('results');
-            let data = [];
-            balletData.forEach(res => { data.push(JSON.stringify(res, null, 2))});
-            results.innerHTML = `<b>Results: </b>\nFiles: [${files}]\n${data}`
+            // let results = document.getElementById('results');
+            // let data = [];
+            // balletData.forEach(res => { data.push(JSON.stringify(res, null, 2))});
+            // results.innerHTML = `<b>Results: </b>\nFiles: [${files}]\n${data}`
 
-            console.log('done');
+            let canidates = [];
+            let votes = [];
+            // canidates.push({
+            //     "type": 'First Choice',
+            //     "name": vote['First Choice'],
+            //     "votes": 1
+            // })
+
+            balletData.forEach((vote, index) => { 
+                if(!canidates.includes(vote['First Choice']) && vote['First Choice'].length > 3){
+                    // Canidate was not in the list
+                    // add them and add a default vote of 1
+                    canidates.push(vote['First Choice'])
+                }
+            });
+            canidates.forEach((canidate, inx) => {
+                balletData.forEach((vote, index) => { 
+                    if(vote['First Choice'] === canidate){
+                        if(!votes[inx]){
+                            votes[inx] = 1;
+                        }else{
+                            votes[inx] +=1;
+                        }
+                    }
+                });
+            })
+
+            console.log(canidates)
+            console.log(votes)
+
+            let newData = []
+            for(let i in canidates){
+                newData.push({
+                    "canidate": canidates[i],
+                    "votes": votes[i]
+                })
+            }
+
+            console.log(newData)
         }
 
     </script>
