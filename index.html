@@ -107,11 +107,22 @@
             removeDuplicated(balletData)
         });
 
+        function Vote(first, second, third, voterid) {
+            this.firstChoice = first;
+            this.secondChoice = second;
+            this.thirdChoice = third;
+            this.VoterID = voterid;
+        }
+
         const saveBallets = (file) => {
             let p = document.getElementById('data');
             for (let data of file.data) {
                 // save the parsed data
-                balletData.push(data)
+                const tempVote = new Vote(data['First Choice'], data['Second Choice'], data['Third Choice'], data['VoterID'])
+                //console.log(tempVote); // uses js object
+                //console.log(data); // uses json object
+
+                balletData.push(tempVote)
             }
         }
 
@@ -119,7 +130,7 @@
             // Making a copy with the Array from() method
             const arrCopy = Array.from(arr);
 
-            const objWithIdIndex = arrCopy.findIndex((obj) => obj['VoterID'] === id);
+            const objWithIdIndex = arrCopy.findIndex((obj) => obj.VoterID === id);
             arrCopy.splice(objWithIdIndex, 1);
             return arrCopy;
         }
@@ -158,13 +169,15 @@
         const getUnique = (ballets) => {
             for (let round of ballets) {
                 Object.entries(round).forEach((entry) => {
-                    const keys = ["First Choice", "Second Choice", "Third Choice"];
+                    const keys = ["firstChoice", "secondChoice", "thirdChoice"];
                     const [key, value] = entry;
                     //console.log(`${key}: ${value}`);
 
                     // Only push a name if its unique, more than 3 characters, and the key is included in keys list...
                     if (!uniqueNames.includes(value) && keys.includes(key) && value.length > 3) {
                         uniqueNames.push(value)
+                        console.log(`${key}: ${value}`);
+
                     }
                 });
             }
@@ -189,7 +202,7 @@
             // })
 
             balletData.forEach((vote, index) => { 
-                if(!canidates.includes(vote[round]) && vote[round].length > 3){
+                if(!canidates.includes(vote[round]) ){
                     // Canidate was not in the list
                     // add them and add a default vote of 1
                     canidates.push(vote[round])
